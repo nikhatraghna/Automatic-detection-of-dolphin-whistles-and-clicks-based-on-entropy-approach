@@ -86,7 +86,3 @@ placeholder data (`notebooks/07`, `notebooks/08`), but no fabricated
 numbers resembling the paper's are ever printed — blocked steps raise/print
 an explicit message instead.
 
-## License
-
-Reproduction code: choose a license appropriate for your competition
-submission. The original paper is CC BY 4.0.
