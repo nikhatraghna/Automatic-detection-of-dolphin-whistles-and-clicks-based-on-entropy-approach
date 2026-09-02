@@ -5,7 +5,7 @@ milestone. **Do not claim full reproduction while H, SE, or their detection
 accuracy remain unimplemented or untested** — these are the paper's entire
 contribution, not peripheral.
 
-## What is implemented (code exists and has been run)
+## What is implemented
 
 - [x] `src/permutation_entropy.py` — from-scratch H, validated against the
   paper's own worked example (exact match, non-negotiable check) and a
@@ -30,12 +30,10 @@ contribution, not peripheral.
 - [x] `tests/` — pytest suite covering all of the above (hand-computable
   checks, synthetic sanity-ordering checks, and edge cases per module).
 
-## What has actually been RUN (not just planned)
+## What has actually been RUN 
 
 As of this audit, every notebook (`02` through `10`) has been executed
-end-to-end in this environment and completed without error. This sandbox
-has no network access, so two things could not be installed/downloaded
-here:
+end-to-end  completed without error. 
 
 - `pytest` — the formal suite in `tests/` is written (mirrors the manual
   checks below in proper pytest form, including edge cases) but has not
