@@ -6,6 +6,7 @@
 # hard-coded. See docs/paper_parameters.md.
 
 import sys
+import time
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -32,19 +33,22 @@ TABLE_DIR.mkdir(parents=True, exist_ok=True)
 CLICK_FILES = ["Click1.wav", "Click2.wav", "Click3.wav", "Click4.wav"]
 
 # NOT SPECIFIED by the paper -- swept explicitly rather than hard-coded.
-# PERFORMANCE FIX (see docs/reproduction_audit.md): the original candidate
-# windows [0.02, 0.05, 0.1] s correspond to 1,920-9,600 samples at these
-# files' sample rates (64-96 kHz). Sample entropy's O(N^2) neighbor search
-# (even KD-tree-accelerated, since real audio is not sparse) makes windows
-# that large take tens of seconds EACH, and hundreds of windows are
-# evaluated per file per candidate -- multi-hour total runtime, impractical
-# on Kaggle. This also gives genuine evidence about the unspecified window
-# length: the paper's own SE benchmark (~420s for a full 60-min recording,
-# Section 3.5) is only achievable with a much smaller window than 9,600
-# samples. We therefore sweep smaller, still-standard SampEn window sizes
-# (hundreds of samples is typical in the SampEn literature; unlike
-# permutation entropy, SE has no m!-scaling sample-size requirement).
-WINDOW_SWEEP_S = [0.002, 0.005, 0.01]  # 192-960 samples at 96 kHz; ~1-8s/file to run
+# ASSUMPTION (performance-driven, documented): sample entropy is O(N^2)
+# per window (full pairwise max-norm distance matrix, twice per window --
+# see src/sample_entropy.py). At real click-recording sample rates
+# (64-96 kHz), a 0.1s window is 6,400-9,600 samples and costs several
+# seconds PER WINDOW; with ~100+ windows per file at the paper's ~0.0125s
+# step, that is 10s of minutes PER (file, window-size) combination -- not a
+# hang, just genuinely expensive brute-force computation. We therefore
+# default this sweep to sub-20ms-per-window window sizes (still spanning a
+# plausible range for detecting brief click transients). To reproduce the
+# original, much larger sweep (e.g. up to 0.1s), see the commented-out line
+# below and budget accordingly (tens of minutes to hours; consider
+# increasing STEP_S too, since it directly multiplies the number of
+# O(N^2) window evaluations).
+WINDOW_SWEEP_S = [0.005, 0.01, 0.02]
+# WINDOW_SWEEP_S = [0.05, 0.1, 0.2]  # SLOW: budget tens of minutes+ per file, see note above
+
 STEP_S = 0.0125  # FACT-derived: midpoint of the Discussion's "~0.011-0.014 s" range
 
 
@@ -119,6 +123,14 @@ def run_window_sweep_on_click_files():
         data, sr = read_wav(str(RAW_DIR / fname))
         fig, axes = plt.subplots(len(WINDOW_SWEEP_S), 1, figsize=(8, 2.2 * len(WINDOW_SWEEP_S)), sharex=True)
         for ax, win_s in zip(np.atleast_1d(axes), WINDOW_SWEEP_S):
+            win_n = int(round(win_s * sr))
+            n_windows_est = max(0, (len(data) - win_n) // int(round(STEP_S * sr)) + 1)
+            t_start = time.time()
+            print(
+                f"  {fname}: window={win_s}s ({win_n} samples) -> "
+                f"~{n_windows_est} windows, starting...",
+                flush=True,
+            )
             try:
                 times, SE = sliding_sample_entropy(
                     data, fs=sr, window_seconds=win_s, step_seconds=STEP_S, d=DEFAULT_D, r_factor=DEFAULT_R_FACTOR
@@ -126,6 +138,7 @@ def run_window_sweep_on_click_files():
             except ValueError as e:
                 print(f"  [skip] {fname} window={win_s}s: {e}")
                 continue
+            print(f"    done in {time.time() - t_start:.1f}s", flush=True)
             finite = np.isfinite(SE)
             ax.plot(times[finite], SE[finite], marker="o", markersize=2, linewidth=0.7)
             ax.axhline(0.6, color="red", linestyle="--", linewidth=0.8, label="threshold 0.6")
