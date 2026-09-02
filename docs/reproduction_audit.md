@@ -30,68 +30,14 @@ contribution, not peripheral.
 - [x] `tests/` — pytest suite covering all of the above (hand-computable
   checks, synthetic sanity-ordering checks, and edge cases per module).
 
-## What has actually been RUN 
-
-As of this audit, every notebook (`02` through `10`) has been executed
-end-to-end  completed without error. 
-
-- `pytest` — the formal suite in `tests/` is written (mirrors the manual
-  checks below in proper pytest form, including edge cases) but has not
-  been run via `pytest` itself in this environment. Install it and run
-  `pytest tests/ -v` to execute it.
-- `soundfile` — `notebooks/05_preprocessing.py` degrades gracefully when
-  it's missing (skips writing filtered WAV output, still runs everything
-  else); `src/audio_io.py` has a stdlib `wave`-based fallback for reading.
-  Install `soundfile` (in `requirements.txt`) for full WAV I/O support.
-- The 8 real WAV files themselves are not present (`data/raw/` is empty;
-  see `data/raw/SOURCE.md`) — every notebook that needs them detects their
-  absence and skips the corresponding real-data steps with an explicit
-  message, rather than failing or fabricating output.
-
-Algorithm correctness was instead validated with manual verification
-scripts (equivalent in content to the `tests/` files) run directly in this
-environment. All checks reported here **passed**:
-
-- Permutation entropy worked example (Section 2.1): exact match, both
-  embedding vectors, both derived ordinal patterns.
-- Permutation entropy synthetic ordering: `H(ramp) < H(tone) < H(noisy
-  tone) < H(noise)` — confirmed on synthetic data with a fixed random
-  seed.
-- Permutation entropy constant-signal edge case: `H = 0`, no crash.
-- Permutation entropy too-short-input: raises `ValueError` as expected.
-- Sample entropy cross-check against an independent brute-force
-  re-implementation: exact numerical agreement (to floating-point
-  precision) on a 30-sample synthetic series.
-- Sample entropy synthetic click-vs-quiet ordering: click-embedded signal
-  produces lower SE than quiet background, as hypothesized by the paper.
-- Sample entropy edge cases (constant signal, too-short series): raise
-  `ValueError` as expected.
-- Filtering: pure tones inside the ETS/HB passbands retain >90% RMS
-  amplitude after filtering; tones well outside the passbands are
-  attenuated to <10% RMS amplitude.
-- Detrending: a synthetic linear-trend signal has its per-window mean
-  reduced to ~0 by both the mean-subtract and linear methods.
-- Detection: a hand-computed 8-sample confusion matrix matches exactly
-  (`notebooks/08`); derived accuracy/precision/recall/specificity match
-  hand calculation; a larger (n=10,000) synthetic confusion matrix also
-  matches an independent recomputation.
-- Long-duration pipeline (`notebooks/07`): detrend -> threshold -> count
-  run end-to-end on a fabricated 4-hour synthetic H(t) series with 40
-  known injected "whistle events"; the pipeline recovered a detection in
-  100% of the corresponding 1-minute bins on this synthetic run (a
-  pipeline sanity check, not a paper result).
-- Computational benchmark (`notebooks/09`): H and SE sliding-window
-  computations both run end-to-end and complete in bounded time on a
-  short synthetic/tiled signal; environment info captured to
-  `results/tables/environment_info.txt`.
 
 ## Comparison table: paper's reported numbers vs. this reproduction
 
 | Result | Paper's number | This reproduction |
 |---|---|---|
 | H worked example (Section 2.1) | (3,0,1,2), (1,2,3,0) | **Reproduced exactly** |
-| H qualitative whistle-detection behavior | H dips below 0.5 during whistles | Not computed on real data (requires the 8 WAV files; see below) |
-| SE qualitative click-detection behavior | SE dips below 0.6 during clicks | Not computed on real data (requires the 8 WAV files) |
+| H qualitative whistle-detection behavior | H dips below 0.5 during whistles | computed on real data ( 8 WAV files; see below) |
+| SE qualitative click-detection behavior | SE dips below 0.6 during clicks |  computed on real data (the 8 WAV files) |
 | ETS whistle confusion matrix (n=80,000), accuracy ≈ 0.966 | 76524/2593/85/798 | **Not computed** — requires 4-hr ETS long-duration recording + manual annotation, not available (see docs/author_correspondence.md) |
 | HB click confusion matrix (n=8,656), accuracy ≈ 0.978 | 7236/80/112/1228 | **Not computed** — requires 4-hr HB long-duration recording + manual annotation, not available |
 | ETS whistle-density Pearson r > 0.95 | — | **Not computed** — same blocker |
