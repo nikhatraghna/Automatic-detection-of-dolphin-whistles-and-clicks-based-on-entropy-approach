@@ -5,9 +5,7 @@ __pycache__/
 data/raw/*.wav
 data/processed/filtered/*
 data/processed/entropy_timeseries/*
-results/figures/*
-results/tables/*
-results/metrics/*
+
 !data/processed/filtered/.gitkeep
 !data/processed/entropy_timeseries/.gitkeep
 !results/figures/.gitkeep
