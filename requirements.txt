@@ -1,0 +1,12 @@
+numpy>=1.24
+scipy>=1.10
+pandas>=2.0
+matplotlib>=3.7
+soundfile>=0.12
+pytest>=7.4
+
+# Optional, cross-validation ONLY (never the primary/shipped entropy
+# implementation, per reproduction Rule 1). Install manually if you want to
+# run the optional cross-validation cells in the notebooks.
+# antropy
+# EntropyHub

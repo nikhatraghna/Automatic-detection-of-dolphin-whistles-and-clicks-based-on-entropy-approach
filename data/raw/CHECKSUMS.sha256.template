@@ -1,0 +1,6 @@
+# Run, after downloading the 8 files into this directory:
+#   sha256sum *.wav > CHECKSUMS.sha256
+# We do not have local copies of the authors' original files in this
+# environment to compute real checksums, so no CHECKSUMS.sha256 is
+# committed here yet -- generate it yourself after downloading and keep it
+# under version control so future runs can verify file integrity.
